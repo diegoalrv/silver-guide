@@ -190,7 +190,7 @@ def main():
     gdf = gpd.GeoDataFrame(data, crs="EPSG:4326")
 
     # Supongamos que ya tienes tu grid_gdf creado
-    grid_gdf = create_grid(-4, 4, -4, 4, 0.5)
+    grid_gdf = create_grid(-4, 4, -4, 4, 0.1)
 
     # Ejemplo de uso de la función
     save_grid_as_texture(grid_gdf)
@@ -231,7 +231,7 @@ def main():
             plotter.add_mesh(mesh)  # Sin textura o con una textura específica
 
     # Exportar la escena actual como un archivo .obj
-    plotter.export_obj("tu_escena.stl")
+    plotter.export_obj("tu_escena.obj")
 
     # Cerrar el plotter
     plotter.close()
