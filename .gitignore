@@ -1,3 +1,5 @@
 env
 *.obj
 *.mtl
+*.parquet
+construcciones_maqueta

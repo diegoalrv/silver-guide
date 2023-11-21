@@ -6,45 +6,6 @@ import pyvista as pv
 from shapely.geometry import Polygon
 from shapely.affinity import scale
 import numpy as np
-import matplotlib.pyplot as plt
-import numpy as np
-
-def save_grid_as_texture(grid_gdf, output_filename="heatmap.png"):
-    """
-    Guarda el grid_gdf como una imagen de textura en el archivo especificado.
-
-    :param grid_gdf: GeoDataFrame que contiene la geometría y los valores numéricos.
-    :param output_filename: Nombre del archivo de imagen a guardar.
-    """
-    # Asumiendo que la columna numérica se llama 'num'
-    column = 'num'
-
-    # Determinar los límites del grid
-    x_min, x_max = grid_gdf.bounds.minx.min(), grid_gdf.bounds.maxx.max()
-    y_min, y_max = grid_gdf.bounds.miny.min(), grid_gdf.bounds.maxy.max()
-    cell_size = (grid_gdf.geometry[0].bounds[2] - grid_gdf.geometry[0].bounds[0])  # Tamaño de una celda
-
-    # Crear un mapa de colores de rojo a verde
-    min_num = grid_gdf[column].min()
-    max_num = grid_gdf[column].max()
-    cmap = plt.cm.RdYlGn  # Red-Yellow-Green colormap
-
-    # Dimensiones de la imagen de la textura
-    num_x_cells = int((x_max - x_min) / cell_size)
-    num_y_cells = int((y_max - y_min) / cell_size)
-    texture_img = np.zeros((num_y_cells, num_x_cells, 3))  # Imagen RGB
-
-    # Rellenar la imagen con los colores del grid
-    for _, row in grid_gdf.iterrows():
-        x_idx = int((row['geometry'].centroid.x - x_min) / cell_size)
-        y_idx = int((row['geometry'].centroid.y - y_min) / cell_size)
-        norm_value = (row[column] - min_num) / (max_num - min_num)
-        color = cmap(norm_value)[:3]  # Obtener color del mapa de colores
-        texture_img[y_idx, x_idx, :] = color
-
-    # Guardar la imagen de la textura
-    plt.imsave(output_filename, texture_img)
-
 
 def create_grid(x_min, x_max, y_min, y_max, cell_size):
     """
@@ -173,7 +134,13 @@ def create_roof_shape(polygon, base_height, expansion_factor=1.03, roof_height_f
     roof_mesh.texture_map_to_plane(inplace=True)
     return roof_mesh
 
+
+
 def main():
+    # Cargar texturas
+    texture1 = pv.read_texture('./edificio.jpg')
+    texture2 = pv.read_texture('./pasto.jpg')
+    texture3 = pv.read_texture('./techo.jpg')
 
     # Crear un GeoDataFrame con el polígono cuadrado
     data = {
@@ -188,21 +155,32 @@ def main():
         }
     gdf = gpd.GeoDataFrame(data, crs="EPSG:4326")
 
+
+    # buildings = gpd.read_file('./construcciones_maqueta')
+    # buildings.rename(columns={'Metros': 'Height'}, inplace=True)
+    # buildings.dropna(subset=['geometry'], inplace=True)
+    # buildings.to_parquet('construcciones_maqueta.parquet')
+
+    buildings = gpd.read_parquet('construcciones_maqueta.parquet')
+    buildings = buildings.iloc[:200, :]
+    print(buildings.head(3))
+
+    print()
+
     # Supongamos que ya tienes tu grid_gdf creado
-    grid_gdf = create_grid(-4, 4, -4, 4, 0.1)
+    grid_gdf = create_grid(-4, 4, -4, 4, 0.5)
 
-    # Ejemplo de uso de la función
-    save_grid_as_texture(grid_gdf)
-
-    #############################################################
-    #### Desde aqui se genera la escena ####
+    # Crear un mapa de colores de rojo a verde
+    min_num = grid_gdf['num'].min()
+    max_num = grid_gdf['num'].max()
+    cmap = plt.cm.RdYlGn  # Red-Yellow-Green colormap
 
     # Crear un plotter
     plotter = pv.Plotter()
-
+    total = len(buildings)
     # Iterar sobre cada fila en el GeoDataFrame
-    for idx, row in gdf.iterrows():
-
+    for idx, row in buildings.iterrows():
+        print(f'{idx}/{total}')
         polygon = row['geometry']
         height = row['Height']
 
@@ -211,11 +189,11 @@ def main():
             main_mesh, side_meshes = create_prism_mesh_and_sides(polygon, height)
 
             # Añadir la malla principal al plotter
-            plotter.add_mesh(main_mesh)  # Sin textura o con una textura específica
+            plotter.add_mesh(main_mesh, texture=texture1)  # Sin textura o con una textura específica
 
             # Añadir cada malla de cara lateral con su textura
             for side_mesh in side_meshes:
-                plotter.add_mesh(side_mesh)
+                plotter.add_mesh(side_mesh, texture=texture1)
 
             roof_mesh = create_roof_shape(
                 polygon,
@@ -223,29 +201,13 @@ def main():
                 expansion_factor=1.20,
                 roof_height_factor=0.5)
             
-            plotter.add_mesh(roof_mesh)
+            plotter.add_mesh(roof_mesh, texture=texture3)
 
         else:
             mesh = create_flat_mesh(polygon)
-            plotter.add_mesh(mesh)  # Sin textura o con una textura específica
+            plotter.add_mesh(mesh, texture=texture2)  # Sin textura o con una textura específica
 
-    # Exportar la escena actual como un archivo .obj
-    plotter.export_obj("tu_escena.obj")
-
-    # Cerrar el plotter
-    plotter.close()
-
-    # Cargar el objeto 3D
-    mesh_3d = pv.read('tu_escena.obj')
-
-    # Cargar la textura
-    texture = pv.read_texture('heatmap.png')
-
-    # Aplicar la textura al objeto 3D
-    # Esto asume que tu objeto 3D tiene coordenadas de textura adecuadas
-    mesh_3d.texture_map_to_plane(inplace=True)  # Puede que necesites ajustar esto
-    plotter = pv.Plotter()
-    plotter.add_mesh(mesh_3d, texture=texture)
+    # Mostrar el plotter
     plotter.show()
 
 if __name__=='__main__':
