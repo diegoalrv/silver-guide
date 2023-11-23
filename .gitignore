@@ -3,3 +3,4 @@ env
 *.mtl
 *.parquet
 construcciones_maqueta
+data
