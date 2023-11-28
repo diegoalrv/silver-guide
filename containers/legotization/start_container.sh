@@ -1,0 +1,1 @@
+docker run --rm -v ./scripts:/scripts -v ./data:/data legotization
