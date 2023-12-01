@@ -1,0 +1,17 @@
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  background-color: black;
+  overflow: hidden;
+}
+
+#myCanvas {
+  position: absolute;
+  top: 3%;    /* Margen superior del 3% */
+  left: 3%;   /* Margen izquierdo del 3% */
+  width: 94%; /* Ancho del 94% */
+  height: 94%;/* Alto del 94% */
+  background-color: white;
+}
