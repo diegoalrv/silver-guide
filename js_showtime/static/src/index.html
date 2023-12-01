@@ -5,9 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mi Escena 3D</title>
   <link rel="stylesheet" href="style.css">
+
+  <!-- <script src="https://unpkg.com/three@0.159.0/examples/jsm/loaders/GLTFLoader.js"></script>
+  <script src="https://unpkg.com/three@0.159.0/examples/jsm/controls/OrbitControls.js"></script> -->
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.159.0/build/three.min.js",
+        "three/addons/": "https://unpkg.com/three@0.159.0/examples/jsm/"
+      }
+    }
+  </script>
 </head>
 <body>
   <canvas id="myCanvas"></canvas>
-  <script src="bundle.js"></script>
+  <script type="module" src="main.js"></script>
 </body>
 </html>
