@@ -6,7 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 import pandas as pd
-
+import os
+from glob import glob
 # Desactiva todos los warnings
 warnings.filterwarnings("ignore")
 
@@ -141,8 +142,10 @@ def calculate_terrain_stats_for_buildings(buildings_gdf, terrain_gdf):
     # Inicializar listas para almacenar los valores estadísticos
     max_heights, min_heights, mean_heights = [], [], []
 
+    total_data = len(buildings_gdf)
     # Iterar sobre cada edificación
-    for _, building in buildings_gdf.iterrows():
+    for index, building in buildings_gdf.iterrows():
+        print(f'{index}/{total_data}')
         # Encontrar los puntos del terreno que están dentro de la edificación
         within_building = terrain_gdf[terrain_gdf.within(building.geometry)]
 
@@ -185,8 +188,10 @@ def calculate_max_height_for_grid(grid_gdf, merge_gdf, mesh_gdf):
     if grid_gdf.crs != mesh_gdf.crs:
         mesh_gdf = mesh_gdf.to_crs(grid_gdf.crs)
 
+    total_data = len(grid_gdf)
     # Iterar sobre cada cuadrícula en el grid
-    for _, grid_cell in grid_gdf.iterrows():
+    for index, grid_cell in grid_gdf.iterrows():
+        print(f'{index}/{total_data}')
         # Encontrar las edificaciones que intersectan con la cuadrícula
         intersecting_buildings = merge_gdf[merge_gdf.intersects(grid_cell.geometry)]
 
@@ -293,3 +298,42 @@ def create_prism_mesh_and_sides(input_polygon, height, h0=0):
         result_meshes.append((main_mesh, side_meshes))
 
     return result_meshes
+
+def verificar_y_crear_ruta(ruta):
+    # Verificar si la ruta existe
+    if not os.path.exists(ruta):
+        # Si no existe, intentar crearla
+        try:
+            os.makedirs(ruta)
+            print(f"Ruta '{ruta}' creada exitosamente.")
+        except OSError as e:
+            print(f"Error al crear la ruta '{ruta}': {e}")
+    else:
+        print(f"La ruta '{ruta}' ya existe.")
+
+        
+def load_data(path='./data/LEGOTIZATION'):
+    desired_crs = 'EPSG:32718'
+    files = glob(os.path.join(f'{path}', '*.parquet'))
+    gdfs = {}
+    for filename in files:
+        gdf = gpd.read_parquet(filename)
+        name = os.path.split(filename)[-1].replace('.parquet', '')
+        gdfs[name] = gdf
+    return gdfs
+
+def check_crs_data(gdfs, desired_crs):
+    output_dict = {}
+    for name, gdf in gdfs.items():
+        output_dict[name] = check_and_assign_crs(gdf, desired_crs)
+    return output_dict
+
+def unpack_data(gdfs, time='actual'):
+    edificaciones_gdf = gdfs[f'ed_{time}']
+    edificaciones_gdf.rename(columns={'Metros': 'Height'}, inplace=True)
+    edificaciones_gdf.dropna(subset=['geometry'], inplace=True)
+    curvas_nivel_gdf = gdfs['curvas']
+    curvas_nivel_gdf.rename(columns={'CONTOUR': 'elevation'}, inplace=True)
+    unit = gdfs['grid']
+    poligono = gdfs['poligono']
+    return edificaciones_gdf, curvas_nivel_gdf, unit, poligono
