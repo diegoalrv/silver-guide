@@ -38,57 +38,40 @@ for (let i = 0; i < 3; i++) {
 }
 
 // Seleccionar una caja para moverla
-const boxToMove = boxes[0];
+const boxToMove = boxes[0]; // Por ejemplo, mover la primera caja
 
-// Verificar si hay un nuevo movimiento
-function checkForNewMovement() {
-    fetch('http://localhost:5000/is_new_movement')
-        .then(response => response.json())
-        .then(data => {
-            if (data.state) {
-                fetchMovementDetails();
-            }
-        })
-        .catch(error => console.error('Error al verificar nuevo movimiento:', error));
-}
+// Función para manejar el movimiento de la caja
+function moveBox(event) {
+    const key = event.key;
+    const moveStep = 0.1;
 
-// Obtener detalles del movimiento
-function fetchMovementDetails() {
-    fetch('http://localhost:5000/get_movement')
-        .then(response => response.json())
-        .then(data => {
-            applyMovement(data);
-            moveApplied(); // Notificar que el movimiento ha sido aplicado
-        })
-        .catch(error => console.error('Error al obtener detalles de movimiento:', error));
-}
-
-// Aplicar el movimiento a la caja
-function applyMovement(data) {
-    const moveStep = data.steps * 0.1;
-    switch (data.axis) {
-        case 'x':
+    switch (key) {
+      case 'ArrowUp':
+        case 'w':
+            boxToMove.position.z -= moveStep;
+            break;
+        case 'ArrowDown':
+        case 's':
+            boxToMove.position.z += moveStep;
+            break;
+        case 'ArrowLeft':
+        case 'a':
+            boxToMove.position.x -= moveStep;
+            break;
+        case 'ArrowRight':
+        case 'd':
             boxToMove.position.x += moveStep;
             break;
-        case 'y':
+        case 'i':
             boxToMove.position.y += moveStep;
             break;
-        case 'z':
-            boxToMove.position.z += moveStep;
+        case 'o':
+            boxToMove.position.y -= moveStep;
             break;
     }
 }
-
-// Notificar al backend que el movimiento ha sido aplicado
-function moveApplied() {
-    fetch('http://localhost:5000/move_applied', { method: 'POST' })
-        .then(response => response.json())
-        .then(data => console.log('Movimiento aplicado:', data))
-        .catch(error => console.error('Error al notificar movimiento aplicado:', error));
-}
-
-// Llamar a la función regularmente, por ejemplo, cada segundo
-setInterval(checkForNewMovement, 10);
+// Agregar listener para eventos de teclado
+document.addEventListener('keydown', moveBox);
 
 // Configurar la cámara en una vista isométrica
 const distancia = 10;
@@ -102,6 +85,17 @@ const radius = Math.sqrt(2)*distancia;
 // Función de animación
 function animate() {
     requestAnimationFrame(animate);
+
+
+    // Actualizar posición de la cámara para la órbita
+    // camera.position.x = radius * Math.cos(angle);
+    // camera.position.z = radius * Math.sin(angle);
+    // camera.position.y = radius * Math.sin(Math.PI / 4);
+    camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+    // Incrementar el ángulo para la próxima frame
+    angle += 0.01;
+
     renderer.render(scene, camera);
 }
 
