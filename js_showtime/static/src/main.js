@@ -65,18 +65,36 @@ function fetchMovementDetails() {
 
 // Aplicar el movimiento a la caja
 function applyMovement(data) {
-    const moveStep = data.steps * 0.1;
-    switch (data.axis) {
-        case 'x':
-            boxToMove.position.x += moveStep;
-            break;
-        case 'y':
-            boxToMove.position.y += moveStep;
-            break;
-        case 'z':
-            boxToMove.position.z += moveStep;
-            break;
-    }
+  const moveStep = data.steps * 0.1; // Este es el cambio total deseado
+  const targetPosition = new THREE.Vector3(
+      boxToMove.position.x + (data.axis === 'x' ? moveStep : 0),
+      boxToMove.position.y + (data.axis === 'y' ? moveStep : 0),
+      boxToMove.position.z + (data.axis === 'z' ? moveStep : 0)
+  );
+
+  const speed = data.speed; // Esto determinará qué tan rápido se hace el cambio
+
+  // Calcular la cantidad de frames necesarios para el movimiento, basado en la velocidad
+  const frames = Math.abs(moveStep / speed);
+
+  // Crear una función que se ejecute en cada frame para mover el objeto
+  let currentFrame = 0;
+  function moveObject() {
+      if (currentFrame < frames) {
+          boxToMove.position.lerp(targetPosition, currentFrame / frames);
+          currentFrame++;
+          setTimeout(() => {
+            requestAnimationFrame(moveObject);
+          }, 1000); // Pausa de 50 milisegundos
+      } else {
+          // Movimiento completado, puedes llamar a moveApplied aquí si es necesario
+          boxToMove.position.set(targetPosition.x, targetPosition.y, targetPosition.z);
+          // moveApplied(); // Notificar al backend que el movimiento ha sido aplicado
+      }
+  }
+
+  // Iniciar el movimiento
+  moveObject();
 }
 
 // Notificar al backend que el movimiento ha sido aplicado
