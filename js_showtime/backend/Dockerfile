@@ -1,21 +1,17 @@
-# Usa una imagen oficial de Python como imagen base
-FROM python:3.9
+# Usar una imagen base de Python
+FROM python:3.8-slim
 
-# Establece el directorio de trabajo en el contenedor
+# Establecer el directorio de trabajo en el contenedor
 WORKDIR /app
 
-# Copia los archivos de requisitos primero para aprovechar la caché de Docker
-COPY requirements.txt .
+# Copiar los archivos del proyecto al directorio de trabajo
+COPY . /app
 
-# Instala las dependencias
+# Instalar las dependencias
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copia el resto de tu código de aplicación al contenedor
-# COPY . .
-
-WORKDIR /app/backend
-
-EXPOSE 8008
+# Exponer el puerto que utiliza Flask
+EXPOSE 5000
 
 # Comando para ejecutar la aplicación
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8008", "--reload"]
+CMD ["python", "app.py"]
