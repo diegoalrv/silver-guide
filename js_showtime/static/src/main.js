@@ -17,7 +17,7 @@ scene.add(ambientLight);
 const greenMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 }); // Un color verde
 
 const loader = new OBJLoader();
-loader.load('/static/assets/escena_completa_ed.obj', function (object) {
+loader.load('/static/assets/tu_escena.obj', function (object) {
   object.traverse(function (child) {
     if (child.isMesh) {
         child.material = greenMaterial;
