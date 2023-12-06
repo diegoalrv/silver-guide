@@ -1,39 +1,47 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from pathlib import Path
-from fastapi.responses import FileResponse
-import os
+from flask import Flask, request, jsonify
+from flask_cors import CORS  # Importar CORS
 
-app = FastAPI()
+app = Flask(__name__)
+CORS(app)  # Inicializar CORS con la app de Flask
 
-# Configura CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Permite todas las origenes
-    allow_credentials=True,
-    allow_methods=["*"],  # Permite todos los métodos
-    allow_headers=["*"],  # Permite todos los headers
-)
+new_movement = {'state': False}
 
-modules_path = "node_modules"
+# Estado inicial
+movement_data = {
+    "axis": None,
+    "steps": 0
+}
 
-# Ruta absoluta de la carpeta que deseas montar
-ruta_absoluta = os.path.join(Path(__file__).resolve().parent.parent, modules_path)
+@app.route('/is_new_movement', methods=['GET'])
+def is_new_movement():
+    global new_movement
+    return jsonify(new_movement)
 
-print(ruta_absoluta)
+@app.route('/move_applied', methods=['POST'])
+def move_applied():
+    global new_movement
+    new_movement['state'] = False
+    return jsonify(new_movement)
 
-# Monta la carpeta
-app.mount(f"/app/{modules_path}", StaticFiles(directory=f"/app/{modules_path}"), name=modules_path)
-app.mount(f"/app", StaticFiles(directory='/app'), name="app")
+# Endpoint para consultar el movimiento
+@app.route('/get_movement', methods=['GET'])
+def get_movement():
+    global movement_data
+    response = movement_data
+    return jsonify(response)
 
-@app.get("/")
-async def serve_threjs_app():
-    # Ruta local al archivo HTML de tu aplicación de Three.js
-    app_dir = os.path.dirname(os.path.abspath(__file__))
-    html_path = os.path.join("/app", "index.html")
-    return FileResponse(html_path)
+# Endpoint para actualizar el movimiento
+@app.route('/update_movement', methods=['POST'])
+def update_movement():
+    global movement_data, new_movement
+    data = request.json
+    movement_data = {
+        "axis": data["axis"],
+        "steps": data["steps"],
+        
+    }
+    new_movement['state'] = True
+    return jsonify({"message": "Movement updated"}), 200
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8008)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)

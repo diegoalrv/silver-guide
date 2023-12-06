@@ -247,7 +247,7 @@ def rotate_gdf(gdf, angle_degrees):
     print()
     
     center = all_points[['x','y']].mean()
-    center = (0, 100)
+    # center = (0, 100)
 
     # Rotar cada geometría
     rotated_geoms = gdf.geometry.apply(lambda geom: rotate_geometry(geom, angle_radians, center))
